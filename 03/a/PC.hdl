@@ -16,14 +16,18 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
-    Mux16(a=in, b=false, sel=reset, out=in1);
+    //if reset==1 out=0
+    Mux16(a=in,b=false,sel=reset,out=resetOut);
 
-    Or(a=load, b=reset, out=sw1);
-    Mux16(a=loopout, b=in1, sel=sw1, out=regin);
-
-    Or(a=sw1, b=inc, out=regload);
-    Register(in=regin, load=regload, out=regout, out=out);
-
-    Inc16(in=regout, out=inc1);
-    Mux16(a=regout, b=inc1, sel=inc, out=loopout);
+    //If reset==0 continue with value in the register from t-1
+    Or(a=load,b=reset,out=orOut);
+    Mux16(a=loop,b=resetOut,sel=orOut,out=regIn);
+    
+    //load current value into memory
+    Or(a=orOut,b=inc,out=rload);
+    Register(in=regIn,load=rload,out=regOut,out=out);
+   
+    //inc current val if required/loop the register val
+    Inc16(in=regOut,out=incOut);
+    Mux16(a=regOut,b=incOut,sel=inc,out=loop);
 }
